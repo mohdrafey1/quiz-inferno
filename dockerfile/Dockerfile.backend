@@ -1,0 +1,23 @@
+FROM node:20-alpine
+
+WORKDIR /usr/src/app
+
+RUN npm install -g pnpm
+
+COPY ./packages ./packages
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+
+COPY ./package.json ./package.json
+COPY ./turbo.json ./turbo.json
+
+COPY ./apps/backend ./apps/backend
+
+RUN pnpm install
+RUN pnpm run db:generate
+
+EXPOSE 8080
+
+CMD ["pnpm", "run", "start:backend"]
+
+
+#docker build -t quiz-inferno-backend -f ./dockerfile/Dockerfile.backend .
