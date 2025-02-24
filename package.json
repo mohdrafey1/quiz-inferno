@@ -1,24 +1,24 @@
 {
-  "name": "quiz-inferno",
-  "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types",
-    "db:generate": "cd packages/db && pnpx prisma generate && cd ../..",
-    "start:frontend": "cd apps/frontend && pnpm run build && pnpm run start",
-    "start:dashboard": "cd apps/dashboard && pnpm run build && pnpm run start",
-    "start:backend": "cd apps/backend && pnpm run start"
-  },
-  "devDependencies": {
-    "prettier": "^3.5.0",
-    "turbo": "^2.4.2",
-    "typescript": "5.7.3"
-  },
-  "packageManager": "pnpm@9.0.0",
-  "engines": {
-    "node": ">=18"
-  }
+    "name": "quiz-inferno",
+    "private": true,
+    "scripts": {
+        "build": "turbo run build",
+        "dev": "turbo run dev",
+        "lint": "turbo run lint",
+        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+        "check-types": "turbo run check-types",
+        "db:generate": "cd packages/db && npx prisma generate && cd ../..",
+        "start:frontend": "cd apps/frontend && pnpm run build && pnpm run start",
+        "start:dashboard": "cd apps/dashboard && pnpm run build && pnpm run start",
+        "start:backend": "cd apps/backend && pnpm run start"
+    },
+    "devDependencies": {
+        "prettier": "^3.5.0",
+        "turbo": "^2.4.2",
+        "typescript": "5.7.3"
+    },
+    "packageManager": "pnpm@9.0.0",
+    "engines": {
+        "node": ">=18"
+    }
 }
