@@ -15,7 +15,7 @@ COPY ./apps/backend ./apps/backend
 RUN pnpm install
 RUN pnpm run db:generate
 
-EXPOSE 8080
+EXPOSE 5000
 
 CMD ["pnpm", "run", "start:backend"]
 
