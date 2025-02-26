@@ -85,3 +85,37 @@ export const login = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Something went wrong' });
     }
 };
+
+// export const googleLogin = async (req: Request, res: Response) => {
+//     try {
+//         const { email, name } = req.body;
+
+//         let user = await prismaClient.user.findUnique({ where: { email } });
+
+//         if (!user) {
+//             const generatedPassword =
+//                 Math.random().toString(36).slice(-8) +
+//                 Math.random().toString(36).slice(-8);
+//             const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
+
+//             // Create a new user with the hashed password
+//             user = await prismaClient.user.create({
+//                 data: {
+//                     email,
+//                     username: name.replace(/\s+/g, '').toLowerCase(),
+//                     password: hashedPassword,
+//                     role: 'USER',
+//                 },
+//             });
+
+//             console.log(
+//                 `Generated password for ${email}: ${generatedPassword}`
+//             );
+//         }
+
+//         res.json({ token: generateToken(user.id) });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: 'Google login failed' });
+//     }
+// };

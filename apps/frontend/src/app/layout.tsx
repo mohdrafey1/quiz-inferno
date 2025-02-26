@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Sidebar } from './components/Sidebar';
 import Providers from './components/Providers';
+import AuthProvider from './components/SessionProvider';
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -27,14 +29,22 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
-                <Providers>
-                    <div className="flex">
-                        <Sidebar />
-                        <main className="flex-1 transition-all md:ml-64">
-                            {children}
-                        </main>
-                    </div>
-                </Providers>
+                <AuthProvider>
+                    <Providers>
+                        <div className="flex">
+                            <Toaster
+                                position="top-center"
+                                toastOptions={{
+                                    duration: 3000,
+                                }}
+                            />
+                            <Sidebar />
+                            <main className="flex-1 transition-all md:ml-64">
+                                {children}
+                            </main>
+                        </div>
+                    </Providers>
+                </AuthProvider>
             </body>
         </html>
     );
