@@ -4,32 +4,45 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Spinner } from '@repo/ui/Spinner'; // Import the Spinner component
 
 export default function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
+    const [isLoading, setIsLoading] = useState(false); // Loading state
 
     const router = useRouter();
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
-        const res = await fetch('/api/auth/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, username }),
-        });
+        setIsLoading(true); // Start loading
 
-        if (res.ok) {
-            toast.success('Signup Successful! Please Login.');
-            router.push('/login');
-        } else {
-            toast.error('Signup Failed. Please Try Again.');
+        try {
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, username }),
+            });
+
+            if (res.ok) {
+                toast.success('Signup Successful! Please Login.');
+                router.push('/login');
+            } else {
+                const errorData = await res.json();
+                throw new Error(
+                    errorData.message || 'Signup Failed. Please Try Again.'
+                );
+            }
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsLoading(false); // Stop loading
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
             <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
                 <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
                     Sign Up
@@ -91,9 +104,14 @@ export default function SignupPage() {
                     </div>
                     <button
                         type="submit"
-                        className="w-full px-4 py-2 text-white bg-primary rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-700 dark:hover:bg-blue-800"
+                        disabled={isLoading}
+                        className="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-700 dark:hover:bg-blue-800 flex items-center justify-center"
                     >
-                        Sign Up
+                        {isLoading ? (
+                            <Spinner color="#ffffff" size={0.5} />
+                        ) : (
+                            'Sign Up'
+                        )}
                     </button>
                 </form>
                 <p className="text-center text-gray-600 dark:text-gray-400">
