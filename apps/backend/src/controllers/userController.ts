@@ -5,7 +5,7 @@ import { AuthRequest } from '../middlewares/authMiddleware';
 export const getProfile = async (req: AuthRequest, res: Response) => {
     try {
         if (!req.user) {
-            res.status(401).json({ message: 'Unauthorized' });
+            res.status(401).json({ message: 'You are not logged in' });
             return;
         }
 
