@@ -13,5 +13,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/profile'], // Protect multiple routes by adding more paths
+    matcher: ['/profile', '/quizzes/add-quiz'], // Protect multiple routes by adding more paths
 };

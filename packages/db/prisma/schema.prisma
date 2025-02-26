@@ -32,13 +32,20 @@ model Quiz {
   id          String   @id @default(uuid())
   title       String   @db.VarChar(255) 
   entryFee    Int      @default(0)
+  status      QuizStatus @default(PENDING)
   createdBy   String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   questions   Question[]
-  attempts    UserAttempt[] // 👈 Added relation (A quiz can have multiple attempts)
+ attempts    UserAttempt[] // 👈 Added relation (A quiz can have multiple attempts)
 
-  createdByUser User @relation(fields: [createdBy], references: [id], onDelete: Cascade) // 👈 Fix
+  createdByUser User @relation(fields: [createdBy], references: [id], onDelete: Cascade) 
+}
+
+enum QuizStatus {
+  PENDING    
+  APPROVED   
+  REJECTED   
 }
 
 model Question {

@@ -34,7 +34,7 @@ export default function Home() {
             <div className="relative">
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
-                    <div className="fixed mt-2 w-56 bg-white dark:bg-black rounded-lg shadow-lg border border-secondary dark:border-darkSecondary z-50">
+                    <div className="fixed mt-2 w-56 bg-white dark:bg-black rounded-lg shadow-lg border border-secondary z-50">
                         <div className="p-2 space-y-2">
                             <div className="p-2 hover:bg-secondary  rounded-lg cursor-pointer transition-colors">
                                 Add Quiz

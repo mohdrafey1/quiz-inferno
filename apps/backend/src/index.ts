@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import authRoutes from './routes/AuthRoute';
 import userRoutes from './routes/userRoutes';
+import quizRoutes from './routes/frontend/quizRoutes';
 
 dotenv.config();
 const app = express();
@@ -14,6 +15,7 @@ app.use(cors());
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/quiz', quizRoutes);
 
 app.get('/', (req, res) => {
     res.send('Quiz Platform API Running!');

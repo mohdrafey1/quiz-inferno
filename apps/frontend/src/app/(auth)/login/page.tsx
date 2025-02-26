@@ -32,7 +32,7 @@ export default function LoginPage() {
             toast.success('Welcome to Quiz Inferno!');
             router.push('/');
         } catch (error: any) {
-            toast.error(error.message || 'Login failed. Please try again.');
+            toast.error('Login failed. Please try again.');
         } finally {
             setIsLoading(false);
         }
