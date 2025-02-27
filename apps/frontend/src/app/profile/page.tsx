@@ -30,7 +30,7 @@ export default function Profile() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+        <div className="flex items-center justify-center min-h-screen ">
             <div className="w-full max-w-lg p-6 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
                 <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white">
                     Profile

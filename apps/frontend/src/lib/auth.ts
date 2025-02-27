@@ -83,7 +83,6 @@ export const authOptions: AuthOptions = {
                     });
                 }
 
-                // Assign the correct user ID to the `user` object
                 user.id = dbUser.id;
             }
             return true;
@@ -95,7 +94,7 @@ export const authOptions: AuthOptions = {
 
                 // Generate a JWT manually for both Google and Credentials users
                 token.accessToken = jwt.sign(
-                    { id: user.id, email: user.email, role: 'USER' }, // Include role if applicable
+                    { id: user.id, email: user.email, role: 'USER' },
                     process.env.JWT_SECRET as string,
                     { expiresIn: '7d' }
                 );

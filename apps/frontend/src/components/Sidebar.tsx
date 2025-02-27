@@ -69,7 +69,7 @@ export const Sidebar: React.FC = () => {
                 } md:translate-x-0`}
             >
                 {/* Header with Theme Toggle */}
-                <div className="flex justify-between items-center p-3 bg-primary rounded-lg">
+                <div className="flex justify-between items-center p-3 rounded-lg">
                     <h2 className="text-2xl font-bold">Quiz App</h2>
                     <ThemeToggle />
                 </div>

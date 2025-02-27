@@ -10,7 +10,9 @@
         "db:generate": "npx prisma generate --schema=packages/db/prisma/schema.prisma",
         "start:frontend": "cd apps/frontend && pnpm run build && pnpm run start",
         "start:dashboard": "cd apps/dashboard && pnpm run build && pnpm run start",
-        "start:backend": "cd apps/backend && pnpm run start"
+        "start:backend": "cd apps/backend && pnpm run start",
+        "frontend-local": "cd apps/frontend && pnpm run dev",
+        "backend-local": "cd apps/backend && pnpm run dev"
     },
     "devDependencies": {
         "prettier": "^3.5.0",
