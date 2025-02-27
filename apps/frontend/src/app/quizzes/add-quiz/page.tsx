@@ -8,24 +8,32 @@ import { useSession } from 'next-auth/react';
 const AddQuiz = () => {
     const { data: session } = useSession();
     const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
     const [entryFee, setEntryFee] = useState(0);
     const [questions, setQuestions] = useState([
-        { questionText: '', options: ['', ''], correctOptionIndex: 0 },
+        {
+            questionText: '',
+            options: ['', ''],
+            correctOptionIndex: 0,
+            timeLimit: 10,
+        },
     ]);
     const [error, setError] = useState('');
-
-    console.log(session?.accessToken);
 
     const addQuestion = () => {
         setQuestions([
             ...questions,
-            { questionText: '', options: ['', ''], correctOptionIndex: 0 },
+            {
+                questionText: '',
+                options: ['', ''],
+                correctOptionIndex: 0,
+                timeLimit: 10,
+            },
         ]);
     };
 
     const removeQuestion = (index: number) => {
-        const updatedQuestions = questions.filter((_, i) => i !== index);
-        setQuestions(updatedQuestions);
+        setQuestions(questions.filter((_, i) => i !== index));
     };
 
     const handleQuestionChange = (index: number, value: string) => {
@@ -62,12 +70,22 @@ const AddQuiz = () => {
         setQuestions(updatedQuestions);
     };
 
+    const handleTimeLimitChange = (index: number, value: number) => {
+        const updatedQuestions = [...questions];
+        updatedQuestions[index].timeLimit = value;
+        setQuestions(updatedQuestions);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
         if (!title.trim()) {
             setError('Title is required');
+            return;
+        }
+        if (!description.trim()) {
+            setError('Description is required');
             return;
         }
         if (entryFee < 0) {
@@ -93,17 +111,23 @@ const AddQuiz = () => {
 
         try {
             const token = session?.accessToken;
-            const response = await axios.post(
+            await axios.post(
                 'http://localhost:5000/api/v1/quiz',
-                { title, entryFee, questions },
+                { title, description, entryFee, questions },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             toast.success('Quiz added successfully!');
             setTitle('');
+            setDescription('');
             setEntryFee(0);
             setQuestions([
-                { questionText: '', options: ['', ''], correctOptionIndex: 0 },
+                {
+                    questionText: '',
+                    options: ['', ''],
+                    correctOptionIndex: 0,
+                    timeLimit: 10,
+                },
             ]);
         } catch (error: any) {
             setError(error.response?.data?.message || 'Failed to add quiz');
@@ -121,6 +145,14 @@ const AddQuiz = () => {
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
+                        className="w-full border p-2 rounded"
+                    />
+                </div>
+                <div>
+                    <label className="block font-medium">Description:</label>
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                         className="w-full border p-2 rounded"
                     />
                 </div>
@@ -209,6 +241,27 @@ const AddQuiz = () => {
                                             {opt}
                                         </option>
                                     ))}
+                                </select>
+                            </div>
+
+                            {/* Time Limit Selection */}
+                            <div className="mt-2">
+                                <label className="block font-medium">
+                                    Time Limit:
+                                </label>
+                                <select
+                                    value={q.timeLimit}
+                                    onChange={(e) =>
+                                        handleTimeLimitChange(
+                                            qIndex,
+                                            Number(e.target.value)
+                                        )
+                                    }
+                                    className="border p-2 rounded"
+                                >
+                                    <option value={10}>10 sec</option>
+                                    <option value={20}>20 sec</option>
+                                    <option value={30}>30 sec</option>
                                 </select>
                             </div>
 

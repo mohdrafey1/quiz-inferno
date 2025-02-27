@@ -1,23 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUserData } from '@/redux/slices/userSlice';
+import { RootState, AppDispatch } from '@/redux/store';
 import { Spinner } from '@repo/ui/Spinner';
+import { useSession } from 'next-auth/react';
 
 export default function Profile() {
-    const { data: session, status } = useSession();
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+    const { status } = useSession();
+
+    const dispatch = useDispatch<AppDispatch>();
+    const { username, email, currentBalance, totalEarning, loading, error } =
+        useSelector((state: RootState) => state.user);
 
     useEffect(() => {
         if (status === 'authenticated') {
-            fetch('/api/profile')
-                .then((res) => res.json())
-                .then((data) => setUser(data.user || null))
-                .catch((err) => console.error(err))
-                .finally(() => setLoading(false));
-        } else {
-            setLoading(false);
+            dispatch(fetchUserData());
         }
     }, [status]);
 
@@ -29,8 +28,12 @@ export default function Profile() {
         );
     }
 
+    if (error) {
+        return <div>Something error occured</div>;
+    }
+
     return (
-        <div className="flex items-center justify-center min-h-screen ">
+        <div className="flex items-center justify-center min-h-screen">
             <div className="w-full max-w-lg p-6 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
                 <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white">
                     Profile
@@ -39,13 +42,13 @@ export default function Profile() {
                     <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg text-center">
                         <p className="text-sm text-gray-500">Current Balance</p>
                         <p className="text-xl font-semibold">
-                            ₹{user?.currentBalance ?? '0.00'}
+                            ₹{currentBalance ?? '0.00'}
                         </p>
                     </div>
                     <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg text-center">
                         <p className="text-sm text-gray-500">Total Earnings</p>
                         <p className="text-xl font-semibold">
-                            ₹{user?.totalEarning ?? '0.00'}
+                            ₹{totalEarning ?? '0.00'}
                         </p>
                     </div>
                 </div>
@@ -55,7 +58,7 @@ export default function Profile() {
                             Name
                         </label>
                         <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
-                            {user?.username || 'N/A'}
+                            {username || 'N/A'}
                         </p>
                     </div>
                     <div>
@@ -63,7 +66,7 @@ export default function Profile() {
                             Email
                         </label>
                         <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
-                            {user?.email || 'N/A'}
+                            {email || 'N/A'}
                         </p>
                     </div>
                 </div>

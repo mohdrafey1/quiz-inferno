@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -37,7 +38,7 @@ export default function Home() {
                     <div className="fixed mt-2 w-56 bg-white dark:bg-black rounded-lg shadow-lg border border-secondary z-50">
                         <div className="p-2 space-y-2">
                             <div className="p-2 hover:bg-secondary  rounded-lg cursor-pointer transition-colors">
-                                Add Quiz
+                                <Link href={'/quizzes/add-quiz'}>Add Quiz</Link>
                             </div>
                             <div className="p-2 hover:bg-secondary  rounded-lg cursor-pointer transition-colors">
                                 Add Event

@@ -1,22 +1,18 @@
 'use client';
 
+import { store } from '@/redux/store';
 import { ThemeProvider } from 'next-themes';
-import { useEffect, useState } from 'react';
+import { Provider } from 'react-redux';
+import { SessionProvider } from 'next-auth/react';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        return <div className="opacity-0">{children}</div>; // Avoid hydration issues
-    }
-
     return (
-        <ThemeProvider attribute="class" defaultTheme="light">
-            {children}
-        </ThemeProvider>
+        <SessionProvider>
+            <Provider store={store}>
+                <ThemeProvider attribute="class" defaultTheme="light">
+                    {children}
+                </ThemeProvider>
+            </Provider>
+        </SessionProvider>
     );
 }

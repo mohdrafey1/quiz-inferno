@@ -33,6 +33,7 @@ model Quiz {
   title       String   @db.VarChar(255) 
   entryFee    Int      @default(0)
   status      QuizStatus @default(PENDING)
+  description String   @default("No description")
   createdBy   String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
