@@ -14,6 +14,17 @@ interface Quiz {
     title: string;
     description: string;
     entryFee: number;
+    createdBy: string;
+    attempts: {
+        userId: string;
+        score: number;
+        completed: boolean;
+        user: {
+            id: string;
+            email: string;
+            username: string;
+        };
+    }[];
 }
 
 export default function QuizCard({ quiz }: { quiz: Quiz }) {
@@ -22,7 +33,7 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const { status } = useSession();
+    const { data: session, status } = useSession();
     const dispatch = useDispatch<AppDispatch>();
 
     useEffect(() => {
@@ -31,8 +42,15 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
         }
     }, [status, dispatch]);
 
-    const { currentBalance } = useSelector((state: RootState) => state.user);
+    const { currentBalance, id: currentUserId } = useSelector(
+        (state: RootState) => state.user
+    );
     const currentBalanceNumber = parseFloat(currentBalance || '0');
+
+    // Check if the current user has already attempted this quiz
+    const hasAttemptedQuiz = quiz.attempts.some(
+        (attempt) => attempt.userId === currentUserId
+    );
 
     const handleConfirmPurchase = async () => {
         if (!agreeTerms) {
@@ -43,14 +61,29 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
         setLoading(true);
 
         try {
-            await axios.post('http://localhost:5000/api/v1/quiz/pay', {
-                quizId: quiz.id,
-            });
+            const token = session?.accessToken;
+            const response = await axios.post(
+                'http://localhost:5000/api/v1/quiz/pay',
+                {
+                    quizId: quiz.id,
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
 
-            toast.success('Payment successful! Redirecting to quiz...');
+            console.log(response);
+
+            if (response.data?.status === false) {
+                toast.error(
+                    response.data.message || 'You already attempted this quiz.'
+                );
+
+                setShowModal(false);
+                router.push(`/quizzes/${quiz.id}/results`);
+                return;
+            }
+
             setShowModal(false);
-
-            router.push(`/quiz/${quiz.id}/start`);
+            router.push(`/quizzes/${quiz.id}`);
         } catch (error) {
             toast.error('Failed to process payment.');
         } finally {
@@ -68,12 +101,28 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
             <div className="bg-white shadow-md rounded-lg p-4">
                 <h2 className="text-lg font-semibold mt-2">{quiz.title}</h2>
                 <p className="text-gray-600">{quiz.description}</p>
-                <button
-                    className="p-2 rounded-md bg-primary text-white mt-2"
-                    onClick={() => setShowModal(true)}
-                >
-                    Pay {quiz.entryFee}
-                </button>
+                {quiz.createdBy === currentUserId ? (
+                    <button className="p-2 rounded-md bg-secondary text-white mt-2">
+                        View Detail
+                    </button>
+                ) : hasAttemptedQuiz ? (
+                    // Render "View Results" button if the user has already attempted
+                    <button
+                        className="p-2 rounded-md bg-primary text-white mt-2"
+                        onClick={() =>
+                            router.push(`/quizzes/${quiz.id}/results`)
+                        }
+                    >
+                        View Result
+                    </button>
+                ) : (
+                    <button
+                        className="p-2 rounded-md bg-primary text-white mt-2"
+                        onClick={() => setShowModal(true)}
+                    >
+                        Pay {quiz.entryFee}
+                    </button>
+                )}
             </div>
 
             {/* Payment Modal */}
@@ -93,10 +142,9 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
                             <span className="font-medium">Entry Fee:</span> ₹
                             {quiz.entryFee}
                         </p>
-                        {currentBalanceNumber <= quiz.entryFee ? (
+                        {currentBalanceNumber < quiz.entryFee ? (
                             <p className="text-red-500 mt-4">
-                                Your Balance is insufficient , Please Add
-                                Balance
+                                Your Balance is insufficient, Please Add Balance
                             </p>
                         ) : (
                             <div>

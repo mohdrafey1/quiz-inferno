@@ -149,6 +149,7 @@ export const startQuiz = async (
         const quiz = await prismaClient.quiz.findUnique({
             where: { id: quizId },
         });
+
         if (!quiz) {
             res.status(404).json({ message: 'Quiz not found' });
             return;
@@ -157,45 +158,76 @@ export const startQuiz = async (
         const user = await prismaClient.user.findUnique({
             where: { id: userId },
         });
+
         if (!user || user.currentBalance < quiz.entryFee) {
             res.status(400).json({ message: 'Insufficient balance' });
             return;
         }
 
-        const existingAttempt = await prismaClient.userAttempt.findFirst({
+        let attempt = await prismaClient.userAttempt.findFirst({
             where: { userId, quizId, completed: false },
         });
 
-        if (existingAttempt) {
-            res.json({ attemptId: existingAttempt.id });
-            return;
+        // If no existing attempt, create a new one
+        if (!attempt) {
+            await prismaClient.user.update({
+                where: { id: userId },
+                data: { currentBalance: { decrement: quiz.entryFee } },
+            });
+
+            attempt = await prismaClient.userAttempt.create({
+                data: { userId, quizId: quizId as string },
+            });
         }
 
-        await prismaClient.user.update({
-            where: { id: userId },
-            data: { currentBalance: { decrement: quiz.entryFee } },
-        });
-
-        const attempt = await prismaClient.userAttempt.create({
-            data: { userId, quizId: quizId as string },
-        });
-
+        // Get the first question (always return first question on start)
         const firstQuestion = await prismaClient.question.findFirst({
             where: { quizId },
             orderBy: { id: 'asc' },
+            include: { options: true },
         });
 
-        res.json({ attemptId: attempt.id, firstQuestion });
+        res.json({ attemptId: attempt.id, question: firstQuestion });
     } catch (error) {
         res.status(500).json({ message: 'Failed to start quiz', error });
     }
 };
 
-// **2. Submit Answer**
-export const submitAnswer = async (
+// **2. Get Next Question**
+export const getNextQuestion = async (
     req: AuthRequest,
     res: Response
 ): Promise<void> => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
+        const { quizId } = req.params;
+        const { lastQuestionId } = req.query;
+
+        const nextQuestion = await prismaClient.question.findFirst({
+            where: { quizId, id: { gt: lastQuestionId as string } },
+            orderBy: { id: 'asc' },
+            include: { options: true }, // Include options in the response
+        });
+
+        if (!nextQuestion) {
+            res.json({ message: 'Quiz completed' });
+            return;
+        }
+
+        res.json(nextQuestion);
+        return;
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to get next question', error });
+        return;
+    }
+};
+
+// **2. Submit Answer**
+export const submitAnswer = async (req: AuthRequest, res: Response) => {
     try {
         if (!req.user) {
             res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -220,6 +252,7 @@ export const submitAnswer = async (
         const question = await prismaClient.question.findUnique({
             where: { id: questionId },
         });
+
         if (!question) {
             res.status(404).json({ message: 'Question not found' });
             return;
@@ -237,10 +270,27 @@ export const submitAnswer = async (
             },
         });
 
+        // Fetch next question
         const nextQuestion = await prismaClient.question.findFirst({
             where: { quizId, id: { gt: questionId } },
             orderBy: { id: 'asc' },
+            include: { options: true },
         });
+
+        if (!nextQuestion) {
+            // No more questions, mark quiz as complete
+            await prismaClient.userAttempt.update({
+                where: { id: attempt.id },
+                data: { completed: true, finishedAt: new Date() },
+            });
+
+            res.json({
+                message: 'Quiz completed',
+                isCorrect,
+                nextQuestion: null,
+            });
+            return;
+        }
 
         res.json({ isCorrect, nextQuestion });
     } catch (error) {
@@ -248,39 +298,7 @@ export const submitAnswer = async (
     }
 };
 
-// **3. Get Next Question**
-export const getNextQuestion = async (
-    req: AuthRequest,
-    res: Response
-): Promise<void> => {
-    try {
-        if (!req.user) {
-            res.status(401).json({ success: false, message: 'Unauthorized' });
-            return;
-        }
-
-        const { quizId } = req.params;
-        const { lastQuestionId } = req.query;
-
-        const nextQuestion = await prismaClient.question.findFirst({
-            where: { quizId, id: { gt: lastQuestionId as string } },
-            orderBy: { id: 'asc' },
-        });
-
-        if (!nextQuestion) {
-            res.json({ message: 'Quiz completed' });
-            return;
-        }
-
-        res.json(nextQuestion);
-        return;
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to get next question', error });
-        return;
-    }
-};
-
-// **4. Complete Quiz**
+// **3. Complete Quiz**
 export const completeQuiz = async (
     req: AuthRequest,
     res: Response
@@ -304,5 +322,176 @@ export const completeQuiz = async (
     } catch (error) {
         res.status(500).json({ message: 'Failed to complete quiz', error });
         return;
+    }
+};
+
+export const confirmPayment = async (
+    req: AuthRequest,
+    res: Response
+): Promise<void> => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
+        const { quizId } = req.body;
+        const userId = req.user.id;
+
+        const quiz = await prismaClient.quiz.findUnique({
+            where: { id: quizId },
+        });
+        if (!quiz) {
+            res.status(404).json({ message: 'Quiz not found' });
+            return;
+        }
+
+        const user = await prismaClient.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user || user.currentBalance < quiz.entryFee) {
+            res.status(400).json({ message: 'Insufficient balance' });
+            return;
+        }
+
+        const existingAttempt = await prismaClient.userAttempt.findFirst({
+            where: { userId, quizId },
+        });
+
+        if (existingAttempt) {
+            res.json({
+                attemptId: existingAttempt.id,
+                message: 'You Already Attempted this quiz',
+                status: false,
+            });
+            return;
+        }
+
+        await prismaClient.user.update({
+            where: { id: userId },
+            data: { currentBalance: { decrement: quiz.entryFee } },
+        });
+
+        const attempt = await prismaClient.userAttempt.create({
+            data: { userId, quizId },
+        });
+
+        // Save the transaction for payment deduction
+        await prismaClient.transaction.create({
+            data: {
+                userId,
+                type: 'QuizAttempt',
+                amount: quiz.entryFee,
+                description: `Entry fee for quiz: ${quiz.title}`,
+            },
+        });
+
+        res.json({
+            success: true,
+            attemptId: attempt.id,
+            message: 'Payment confirmed and quiz attempt started.',
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to confirm payment', error });
+    }
+};
+
+export const quizResult = async (
+    req: AuthRequest,
+    res: Response
+): Promise<void> => {
+    try {
+        const { quizId } = req.params;
+        const userId = req.user?.id;
+
+        if (!userId || !quizId) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid request parameters',
+            });
+            return;
+        }
+
+        // ✅ Find the user's attempt for the given quiz
+        const userAttempt = await prismaClient.userAttempt.findFirst({
+            where: {
+                userId: userId,
+                quizId: quizId,
+            },
+            select: { id: true },
+        });
+
+        if (!userAttempt) {
+            res.status(404).json({
+                success: false,
+                message: 'User has not attempted this quiz.',
+            });
+            return;
+        }
+
+        // ✅ Fetch all questions of the quiz and their correct options
+        const allQuestions = await prismaClient.question.findMany({
+            where: {
+                quizId: quizId,
+            },
+            select: {
+                id: true,
+                questionText: true,
+                correctOptionId: true,
+                options: {
+                    select: {
+                        id: true,
+                        text: true, // Fetch the option text
+                    },
+                },
+            },
+        });
+
+        // ✅ Fetch user responses for this quiz attempt
+        const responses = await prismaClient.response.findMany({
+            where: {
+                userAttemptId: userAttempt.id, // Ensure correct attempt filtering
+            },
+            select: {
+                id: true,
+                questionId: true,
+                selectedOptionId: true,
+                isCorrect: true,
+                timeTaken: true,
+            },
+        });
+
+        // ✅ Merge responses with questions and options for better frontend display
+        const resultData = allQuestions.map((question) => {
+            const response = responses.find(
+                (r) => r.questionId === question.id
+            );
+
+            // Find the correct option text
+            const correctOption = question.options.find(
+                (option) => option.id === question.correctOptionId
+            );
+            // Find the selected option text
+            const selectedOption = question.options.find(
+                (option) => option.id === response?.selectedOptionId
+            );
+
+            return {
+                questionId: question.id,
+                questionText: question.questionText,
+                correctOption: correctOption ? correctOption.text : '',
+                selectedOption: selectedOption ? selectedOption.text : '',
+                isCorrect: response ? response.isCorrect : false,
+                timeTaken: response ? response.timeTaken : 0,
+            };
+        });
+
+        res.json({ success: true, result: resultData });
+    } catch (error) {
+        console.error('Error fetching quiz results:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch results.',
+        });
     }
 };

@@ -20,6 +20,7 @@ model User {
 
   quizzes       Quiz[] // 👈 Added relation (A user can create multiple quizzes)
   attempts      UserAttempt[] // 👈 Added relation (A user can attempt multiple quizzes)
+  transactions   Transaction[]
 }
 
 enum Role {
@@ -97,6 +98,24 @@ model Response {
   question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade) // 👈 Fixed
 }
 
+model Transaction {
+  id          String          @id @default(uuid())
+  userId      String
+  type        TransactionType
+  amount      Int             @default(0) 
+  description String?       
+  createdAt   DateTime        @default(now())
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+enum TransactionType {
+  QuizAttempt    
+  HackathonAttempt   
+  EventAttempt
+  AddBalance
+  RedeemBalance
+  EarnBalance   
+}
 
 
 

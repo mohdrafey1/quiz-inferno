@@ -6,8 +6,17 @@ export async function GET() {
         const quizzes = await prismaClient.quiz.findMany({
             where: { status: 'APPROVED' },
             orderBy: { createdAt: 'desc' },
+            include: {
+                attempts: {
+                    // Include the attempts made on the quiz
+                    include: {
+                        user: true, // Include the user who made the attempt
+                    },
+                },
+            },
         });
 
+        // Now quizzes will contain the attempts and the users who attempted
         return NextResponse.json(quizzes);
     } catch (error) {
         console.error('Error fetching quizzes:', error);

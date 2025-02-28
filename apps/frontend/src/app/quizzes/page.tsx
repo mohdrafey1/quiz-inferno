@@ -10,11 +10,23 @@ interface Quiz {
     title: string;
     description: string;
     entryFee: number;
+    createdBy: string;
+    attempts: {
+        userId: string;
+        score: number;
+        completed: boolean;
+        user: {
+            id: string;
+            email: string;
+            username: string;
+        };
+    }[];
 }
 
 export default function QuizList() {
     const [quizzes, setQuizzes] = useState<Quiz[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string>('');
 
     useEffect(() => {
         const fetchQuizzes = async () => {
@@ -26,6 +38,7 @@ export default function QuizList() {
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching quizzes:', error);
+                setError(error as string);
             } finally {
                 setLoading(false);
             }
@@ -34,12 +47,18 @@ export default function QuizList() {
         fetchQuizzes();
     }, []);
 
+    console.log(quizzes);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Spinner size={3} />
             </div>
         );
+    }
+
+    if (error) {
+        return <div>{error}</div>;
     }
 
     return (
